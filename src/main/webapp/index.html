@@ -20,7 +20,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background-color: var(--bg); color: var(--text); }
 
-    .skip { position: absolute; left: -9999px; }
     .aviso { background: #fff3cd; color: #856404; padding: 10px 20px; font-size: 13px; border-bottom: 1px solid #ffeeba; text-align: center; }
 
     .layout { display: flex; min-height: calc(100vh - 35px); }
@@ -220,15 +219,51 @@
 
           <h3 style="margin-top: 15px;">2. Selecione as crianças na foto</h3>
           <div class="criancas" id="grade">
-            <label data-turma="Berçário I"><input type="checkbox" value="1"><span>Elisa Campos<br><small>Berçário I</small></span><span class="cod">FJ26-0005</span></label>
-            <label data-turma="Berçário II"><input type="checkbox" value="2"><span>Helena Prado<br><small>Berçário II</small></span><span class="cod">FJ26-0007</span></label>
-            <label data-turma="Maternal I"><input type="checkbox" value="3"><span>Bernardo Siqueira<br><small>Maternal I</small></span><span class="cod">DP26-0012</span></label>
-            <label data-turma="Maternal I"><input type="checkbox" value="4"><span>Manuela Rezende<br><small>Maternal I</small></span><span class="cod">DP26-0016</span></label>
-            <label data-turma="Maternal II"><input type="checkbox" value="5"><span>Ravi Antunes<br><small>Maternal II</small></span><span class="cod">BOS26-0023</span></label>
-            <label data-turma="Maternal II"><input type="checkbox" value="6"><span>Alice Martins<br><small>Maternal II</small></span><span class="cod">FJ26-0024</span></label>
+            <!-- As crianças serão carregadas dinamicamente do Supabase -->
+            <p style="color: #666; font-size: 13px;">Carregando crianças do Supabase...</p>
           </div>
-          <button class="acao" id="btVerificar">🔎 Verificar autorizações no Supabase</button>
+          
+          <div class="btn-group">
+            <button class="acao" id="btVerificar">🔎 Verificar autorizações no Supabase</button>
+            <button class="acao-secundaria" onclick="toggleFormNovaCrianca()">➕ Cadastrar Nova Criança</button>
+          </div>
         </div>
+
+        <!-- FORMULÁRIO PARA CADASTRAR NOVA CRIANÇA -->
+        <div class="cartao" id="cardNovaCrianca" hidden style="border: 2px solid var(--primary); background: #f0f7ff;">
+          <h3 style="color: var(--primary);">👶 Cadastrar Nova Criança no Supabase</h3>
+          <div class="campos">
+            <div>
+              <label for="nNome">Nome Completo da Criança</label>
+              <input type="text" id="nNome" placeholder="Ex.: Lucas Gabriel Silva">
+            </div>
+            <div>
+              <label for="nTurma">Turma</label>
+              <select id="nTurma">
+                <option value="Berçário I">Berçário I</option>
+                <option value="Berçário II">Berçário II</option>
+                <option value="Maternal I">Maternal I</option>
+                <option value="Maternal II">Maternal II</option>
+              </select>
+            </div>
+          </div>
+          <div class="campos">
+            <div>
+              <label for="nCodigo">Código do Termo</label>
+              <input type="text" id="nCodigo" placeholder="Ex.: FJ26-0030">
+            </div>
+            <div>
+              <label for="nAutorizado">Status Inicial de Autorização</label>
+              <select id="nAutorizado">
+                <option value="true">✅ Autorizado pelos Responsáveis</option>
+                <option value="false">❌ Não Autorizado / Pendente</option>
+              </select>
+            </div>
+          </div>
+          <button class="acao" onclick="salvarNovaCrianca()">💾 Salvar Criança no Supabase</button>
+          <div id="msgNovaCrianca" class="msg-feedback"></div>
+        </div>
+
         <div id="areaResultado"></div>
       </section>
 
@@ -257,12 +292,7 @@
             <div>
               <label for="rCrianca">Selecione a Criança</label>
               <select id="rCrianca">
-                <option value="1">Elisa Campos (FJ26-0005)</option>
-                <option value="2">Helena Prado (FJ26-0007)</option>
-                <option value="3">Bernardo Siqueira (DP26-0012)</option>
-                <option value="4">Manuela Rezende (DP26-0016)</option>
-                <option value="5">Ravi Antunes (BOS26-0023)</option>
-                <option value="6">Alice Martins (FJ26-0024)</option>
+                <!-- Carregado dinamicamente -->
               </select>
             </div>
             <div>
@@ -280,7 +310,7 @@
         </div>
       </section>
 
-      <!-- 5. PROJETOS E IMPRESSÃO (COM CRIAÇÃO DE NOVOS MODELOS) -->
+      <!-- 5. PROJETOS E IMPRESSÃO -->
       <section id="projetos" hidden>
         <div class="cartao">
           <h3>🖨️ Geração e Impressão de Termos em Lote</h3>
@@ -303,7 +333,7 @@
           </div>
         </div>
 
-        <!-- FORMULÁRIO DINÂMICO PARA CRIAR NOVO MODELO -->
+        <!-- FORMULÁRIO PARA CRIAR NOVO MODELO -->
         <div class="cartao" id="cardNovoModelo" hidden style="border: 2px solid var(--primary); background: #f0f7ff;">
           <h3 style="color: var(--primary);">✨ Cadastrar Novo Modelo / Projeto</h3>
           <div class="campos">
@@ -408,7 +438,8 @@
       });
     });
 
-    // C. Carregar Indicadores em Tempo Real do Supabase
+    // C. Carregar Dados Iniciais do Supabase
+    carregarCriancas();
     atualizarIndicadores();
 
     // D. Eventos dos Filtros e Modelos
@@ -420,7 +451,6 @@
     document.getElementById('btCodigo').addEventListener('click', darBaixaPorCodigo);
     document.getElementById('btRevogar').addEventListener('click', registrarRevogacao);
 
-    // Inicializa a pré-visualização do modelo
     atualizarPreviewModelo();
   });
 
@@ -428,6 +458,106 @@
   function fazerLogout() {
     localStorage.removeItem('usuarioLogado');
     window.location.href = 'login.html';
+  }
+
+  // 👶 1. Carregar Crianças Dinamicamente do Supabase
+  function carregarCriancas() {
+    fetch(`${SUPABASE_URL}/criancas?select=*&order=id.asc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    })
+    .then(res => res.json())
+    .then(criancas => {
+      if (Array.isArray(criancas)) {
+        const grade = document.getElementById('grade');
+        const selectRevogar = document.getElementById('rCrianca');
+        
+        grade.innerHTML = '';
+        selectRevogar.innerHTML = '';
+
+        criancas.forEach(c => {
+          // Renderiza Card na Grade
+          const label = document.createElement('label');
+          label.setAttribute('data-turma', c.turma);
+          label.innerHTML = `
+            <input type="checkbox" value="${c.id}">
+            <span>${c.nome}<br><small>${c.turma}</small></span>
+            <span class="cod">${c.codigo_termo}</span>
+          `;
+          grade.appendChild(label);
+
+          // Renderiza no Select de Revogação
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.nome} (${c.codigo_termo})`;
+          selectRevogar.appendChild(opt);
+        });
+
+        filtrarPorTurma();
+      }
+    })
+    .catch(err => console.error('Erro ao carregar crianças:', err));
+  }
+
+  // 👶 2. Alternar Formulário de Nova Criança
+  function toggleFormNovaCrianca() {
+    const card = document.getElementById('cardNovaCrianca');
+    card.hidden = !card.hidden;
+  }
+
+  // 💾 3. Salvar Nova Criança no Supabase
+  function salvarNovaCrianca() {
+    const nome = document.getElementById('nNome').value.trim();
+    const turma = document.getElementById('nTurma').value;
+    const codigo_termo = document.getElementById('nCodigo').value.trim().toUpperCase();
+    const autorizado = document.getElementById('nAutorizado').value === 'true';
+    const msg = document.getElementById('msgNovaCrianca');
+
+    if (!nome || !codigo_termo) {
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Por favor, informe o nome e o código do termo.';
+      return;
+    }
+
+    msg.style.color = '#666';
+    msg.textContent = 'Cadastrando criança no Supabase...';
+
+    fetch(`${SUPABASE_URL}/criancas`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ nome, turma, codigo_termo, autorizado })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        msg.style.color = 'var(--ok)';
+        msg.textContent = `✅ Criança '${nome}' cadastrada com sucesso!`;
+
+        document.getElementById('nNome').value = '';
+        document.getElementById('nCodigo').value = '';
+
+        // Recarrega grade, selects e indicadores
+        carregarCriancas();
+        atualizarIndicadores();
+
+        setTimeout(() => {
+          msg.textContent = '';
+          document.getElementById('cardNovaCrianca').hidden = true;
+        }, 1500);
+      } else {
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'Erro ao cadastrar criança no Supabase.';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Erro de comunicação com o Supabase.';
+    });
   }
 
   // 🖨️ Alternar Formulário de Criar Modelo
@@ -449,24 +579,20 @@
       return;
     }
 
-    // Salvar no dicionário de modelos
     modelosCadastrados[prefixo] = { nome, prefixo, texto };
 
-    // Adicionar a opção ao select
     const select = document.getElementById('pProjeto');
     const novaOpcao = document.createElement('option');
     novaOpcao.value = prefixo;
     novaOpcao.textContent = nome;
     select.appendChild(novaOpcao);
 
-    // Selecionar o modelo recém-criado
     select.value = prefixo;
     atualizarPreviewModelo();
 
     msg.style.color = 'var(--ok)';
     msg.textContent = `✅ Modelo '${nome}' cadastrado com sucesso!`;
 
-    // Limpar formulário e fechar após 1.5s
     setTimeout(() => {
       document.getElementById('novoNomeProjeto').value = '';
       document.getElementById('novoPrefixocodigo').value = '';
@@ -488,7 +614,7 @@
     }
   }
 
-  // 📊 1. Indicadores Dinâmicos via Supabase
+  // 📊 Indicadores Dinâmicos via Supabase
   function atualizarIndicadores() {
     fetch(`${SUPABASE_URL}/criancas?select=*`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
@@ -507,7 +633,7 @@
     .catch(err => console.error('Erro nos indicadores:', err));
   }
 
-  // 🔍 2. Filtro de Crianças por Turma
+  // 🔍 Filtro de Crianças por Turma
   function filtrarPorTurma() {
     const turmaSelecionada = document.getElementById('fTurma').value;
     const labels = document.querySelectorAll('#grade label');
@@ -522,12 +648,12 @@
     });
   }
 
-  // 🖨️ 3. Simulação de Impressão
+  // 🖨️ Simulação de Impressão
   function imprimirTermos() {
     window.print();
   }
 
-  // 🔎 4. Verificar Autorizações
+  // 🔎 Verificar Autorizações
   function verificarAutorizacoes() {
     const checkboxes = document.querySelectorAll('#grade input[type="checkbox"]:checked');
     const areaResultado = document.getElementById('areaResultado');
@@ -580,7 +706,7 @@
     });
   }
 
-  // 📋 5. Dar Baixa por Código
+  // 📋 Dar Baixa por Código
   function darBaixaPorCodigo() {
     const codigoInput = document.getElementById('dCodigo').value.trim();
     const msg = document.getElementById('msgDevolucao');
@@ -610,6 +736,7 @@
         msg.style.color = 'var(--ok)';
         msg.textContent = `✅ Baixa concluída! O termo ${codigoInput} (${data[0].nome}) agora está VÁLIDO no Supabase.`;
         document.getElementById('dCodigo').value = '';
+        carregarCriancas();
         atualizarIndicadores();
       } else {
         msg.style.color = 'var(--danger)';
@@ -623,7 +750,7 @@
     });
   }
 
-  // 🔔 6. Registrar Revogação
+  // 🔔 Registrar Revogação
   function registrarRevogacao() {
     const criancaId = document.getElementById('rCrianca').value;
     const msg = document.getElementById('msgRevogar');
@@ -646,6 +773,7 @@
       if (Array.isArray(data) && data.length > 0) {
         msg.style.color = 'var(--warn)';
         msg.textContent = `🔔 Revogação registrada! A autorização de ${data[0].nome} foi CANCELADA no Supabase.`;
+        carregarCriancas();
         atualizarIndicadores();
       } else {
         msg.style.color = 'var(--danger)';
