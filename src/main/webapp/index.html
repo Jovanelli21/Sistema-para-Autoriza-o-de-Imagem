@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controle de Autorização de Uso de Imagem | CEMEI Cacilda</title>
+  <style>
+    :root {
+      --primary: #4a90e2;
+      --bg: #f7f9fc;
+      --card-bg: #ffffff;
+      --text: #2c3e50;
+      --border: #e2e8f0;
+      --ok: #2ecc71;
+      --warn: #f39c12;
+      --danger: #e74c3c;
+      --purple: #9b59b6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); }
+
+    .skip { position: absolute; left: -9999px; }
+    .aviso { background: #fff3cd; color: #856404; padding: 10px 20px; font-size: 13px; border-bottom: 1px solid #ffeeba; text-align: center; }
+
+    .layout { display: flex; min-height: calc(100vh - 35px); }
+
+    /* Sidebar */
+    .sidebar { width: 260px; background: #ffffff; border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    .marca { display: flex; align-items: center; gap: 12px; }
+    .logo-casa { font-size: 32px; }
+    .marca strong { font-size: 18px; color: var(--primary); display: block; }
+    .marca b { font-size: 14px; color: #333; letter-spacing: 1px; }
+    .marca small { display: block; font-size: 11px; color: #7f8c8d; }
+
+    .menu { display: flex; flex-direction: column; gap: 8px; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border: none; background: transparent; border-radius: 8px; color: var(--text); font-weight: 600; text-align: left; cursor: pointer; transition: all 0.2s; }
+    .menu-item:hover { background: #edf2f7; }
+    .menu-item.ativo { background: var(--primary); color: white; }
+
+    .mini-notice { background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 12px; font-size: 12px; margin-top: auto; }
+
+    /* Conteudo */
+    .conteudo-site { flex: 1; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+    .titulo-area { display: flex; align-items: center; gap: 12px; }
+    .sol { font-size: 28px; }
+    .topbar h1 { font-size: 20px; color: #2c3e50; }
+    .topbar p { font-size: 12px; color: #7f8c8d; }
+    .usuario { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+    .avatar { font-size: 24px; }
+    .btn-logout { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px; transition: 0.2s; }
+    .btn-logout:hover { background: #ffcdd2; }
+
+    /* Indicadores */
+    .indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .ind { background: white; padding: 18px; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
+    .ind-ico { font-size: 28px; }
+    .ind .num { font-size: 22px; font-weight: bold; }
+    .ind .rot { font-size: 12px; color: #7f8c8d; }
+    .ind.ok .num { color: var(--ok); }
+    .ind.at .num { color: var(--warn); }
+    .ind.erro .num { color: var(--danger); }
+    .ind.roxo .num { color: var(--purple); }
+
+    /* Cartões e Tabelas */
+    .cartao { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
+    .cartao-titulo { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { background: #f8fafc; color: #64748b; font-weight: 600; }
+    .cod { font-family: monospace; font-weight: bold; color: var(--primary); }
+
+    .selo { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .selo.at { background: #fff3cd; color: #856404; }
+
+    /* Formulários e Checkboxes */
+    .campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
+    .campos label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+    .campos input, .campos select, .campos textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+    .campos input:focus, .campos select:focus, .campos textarea:focus { border-color: var(--primary); }
+
+    .criancas { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 15px 0; }
+    .criancas label { border: 1px solid var(--border); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; background: #fafafa; transition: all 0.2s; }
+    .criancas label:hover { border-color: var(--primary); background: #f0f7ff; }
+
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .acao { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .acao:hover { opacity: 0.9; }
+    .acao-secundaria { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .acao-secundaria:hover { opacity: 0.9; }
+
+    /* Resultados e Avisos */
+    .resultado { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .lista { padding: 15px; border-radius: 8px; font-size: 13px; }
+    .lista.liberado { background: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; }
+    .lista.bloqueado { background: #ffebee; border: 1px solid #ffcdd2; color: #c62828; }
+    .lista .cab { font-weight: bold; margin-bottom: 8px; }
+    .lista ul { list-style: none; padding-left: 5px; }
+    .lista li { margin-bottom: 5px; }
+    .motivo { display: block; font-size: 11px; opacity: 0.8; }
+    
+    .msg-feedback { margin-top: 12px; font-weight: bold; font-size: 13px; }
+
+    /* Estilos de Impressão */
+    @media print {
+      body * { visibility: hidden; }
+      #termoParaImpressao, #termoParaImpressao * { visibility: visible; }
+      #termoParaImpressao { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+    }
+
+    footer { font-size: 11px; color: #94a3b8; text-align: center; padding: 15px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<div class="aviso">
+  <strong>🌈 Protótipo navegável</strong> — Dados integrados ao banco de dados Supabase.
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="marca">
+      <div class="logo-casa">🏠</div>
+      <div>
+        <strong>CEMEI</strong>
+        <b>CACILDA</b>
+        <small>Cuidar, Educar e Acolher</small>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <button class="menu-item ativo" data-alvo="painel"><span>🏠</span> Painel</button>
+      <button class="menu-item" data-alvo="postar"><span>📷</span> Antes de postar</button>
+      <button class="menu-item" data-alvo="devolucao"><span>📋</span> Devolução de termos</button>
+      <button class="menu-item" data-alvo="revogar"><span>🔔</span> Registrar revogação</button>
+      <button class="menu-item" data-alvo="projetos"><span>🖨️</span> Projetos e impressão</button>
+    </nav>
+
+    <div class="mini-notice">
+      <strong>🌱 Protótipo acadêmico</strong>
+      <p>UNIVESP 2026</p>
+    </div>
+  </aside>
+
+  <div class="conteudo-site">
+    <header class="topbar">
+      <div class="titulo-area">
+        <div class="sol">☀️</div>
+        <div>
+          <h1>Controle de Autorização de Uso de Imagem</h1>
+          <p>CEMEI Cacilda · Portaria SEMEB nº 41/2026</p>
+        </div>
+      </div>
+      <div class="usuario">
+        <div class="avatar">👩‍🏫</div>
+        <div>
+          <strong id="userEmailDisplay">cemeicacilda@semeb.sp.gov.br</strong><br>
+          <span>Perfil: Gestão</span>
+        </div>
+        <button class="btn-logout" onclick="fazerLogout()">Sair 🚪</button>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <!-- 1. PAINEL -->
+      <section id="painel">
+        <div class="indicadores">
+          <div class="ind ok"><div class="ind-ico">🛡️</div><div><div class="num" id="numValidos">--</div><div class="rot">Autorizações válidas</div></div></div>
+          <div class="ind at"><div class="ind-ico">🕐</div><div><div class="num" id="numVencer">5</div><div class="rot">Vencem em até 30 dias</div></div></div>
+          <div class="ind erro"><div class="ind-ico">❌</div><div><div class="num" id="numVencidas">--</div><div class="rot">Pendentes / Vencidas</div></div></div>
+          <div class="ind roxo"><div class="ind-ico">👥</div><div><div class="num" id="numRevogados">--</div><div class="rot">Revogações registradas</div></div></div>
+        </div>
+
+        <div class="duas-colunas">
+          <div class="cartao">
+            <div class="cartao-titulo"><span>📜</span><h3>Termos a vencer em 30 dias</h3></div>
+            <table>
+              <thead><tr><th>Código</th><th>Criança</th><th>Turma</th><th>Situação</th></tr></thead>
+              <tbody>
+                <tr><td class="cod">FJ26-0005</td><td>Elisa Campos</td><td>Berçário I</td><td><span class="selo at">● A vencer</span></td></tr>
+                <tr><td class="cod">FJ26-0007</td><td>Helena Prado</td><td>Berçário II</td><td><span class="selo at">● A vencer</span></td></tr>
+                <tr><td class="cod">DP26-0012</td><td>Bernardo Siqueira</td><td>Maternal I</td><td><span class="selo at">● A vencer</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="cartao">
+            <div class="cartao-titulo"><span>📊</span><h3>Cobertura por Turma</h3></div>
+            <table>
+              <thead><tr><th>Turma</th><th>Válidos</th><th>Cobertura</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Berçário I</strong></td><td>5 / 6</td><td>83%</td></tr>
+                <tr><td><strong>Berçário II</strong></td><td>5 / 6</td><td>83%</td></tr>
+                <tr><td><strong>Maternal I</strong></td><td>10 / 12</td><td>83%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. ANTES DE POSTAR -->
+      <section id="postar" hidden>
+        <div class="cartao">
+          <h3>1. Filtro de publicação</h3>
+          <div class="campos">
+            <div>
+              <label for="fTurma">Filtrar por Turma</label>
+              <select id="fTurma">
+                <option value="TODAS">Mostrar Todas as Turmas</option>
+                <option value="Berçário I">Berçário I</option>
+                <option value="Berçário II">Berçário II</option>
+                <option value="Maternal I">Maternal I</option>
+                <option value="Maternal II">Maternal II</option>
+              </select>
+            </div>
+          </div>
+
+          <h3 style="margin-top: 15px;">2. Selecione as crianças na foto</h3>
+          <div class="criancas" id="grade">
+            <label data-turma="Berçário I"><input type="checkbox" value="1"><span>Elisa Campos<br><small>Berçário I</small></span><span class="cod">FJ26-0005</span></label>
+            <label data-turma="Berçário II"><input type="checkbox" value="2"><span>Helena Prado<br><small>Berçário II</small></span><span class="cod">FJ26-0007</span></label>
+            <label data-turma="Maternal I"><input type="checkbox" value="3"><span>Bernardo Siqueira<br><small>Maternal I</small></span><span class="cod">DP26-0012</span></label>
+            <label data-turma="Maternal I"><input type="checkbox" value="4"><span>Manuela Rezende<br><small>Maternal I</small></span><span class="cod">DP26-0016</span></label>
+            <label data-turma="Maternal II"><input type="checkbox" value="5"><span>Ravi Antunes<br><small>Maternal II</small></span><span class="cod">BOS26-0023</span></label>
+            <label data-turma="Maternal II"><input type="checkbox" value="6"><span>Alice Martins<br><small>Maternal II</small></span><span class="cod">FJ26-0024</span></label>
+          </div>
+          <button class="acao" id="btVerificar">🔎 Verificar autorizações no Supabase</button>
+        </div>
+        <div id="areaResultado"></div>
+      </section>
+
+      <!-- 3. DEVOLUÇÃO DE TERMOS -->
+      <section id="devolucao" hidden>
+        <div class="cartao">
+          <h3>📋 Baixa pelo Código do Termo Assinado</h3>
+          <p style="font-size: 13px; color: #666; margin-top: 5px;">Digite o código impresso no rodapé do termo entregue pelos pais para reativar a autorização.</p>
+          <div class="campos" style="max-width: 500px;">
+            <div>
+              <label for="dCodigo">Código impresso no rodapé</label>
+              <input type="text" id="dCodigo" placeholder="Ex.: DP26-0012 ou FJ26-0024">
+            </div>
+          </div>
+          <button class="acao" id="btCodigo">✓ Dar baixa e Autorizar no Supabase</button>
+          <div id="msgDevolucao" class="msg-feedback"></div>
+        </div>
+      </section>
+
+      <!-- 4. REGISTRAR REVOGAÇÃO -->
+      <section id="revogar" hidden>
+        <div class="cartao">
+          <h3>🔔 Registrar Revogação de Autorização</h3>
+          <p style="font-size: 13px; color: #666; margin-top: 5px;">Quando os responsáveis solicitam o cancelamento da permissão de imagem.</p>
+          <div class="campos">
+            <div>
+              <label for="rCrianca">Selecione a Criança</label>
+              <select id="rCrianca">
+                <option value="1">Elisa Campos (FJ26-0005)</option>
+                <option value="2">Helena Prado (FJ26-0007)</option>
+                <option value="3">Bernardo Siqueira (DP26-0012)</option>
+                <option value="4">Manuela Rezende (DP26-0016)</option>
+                <option value="5">Ravi Antunes (BOS26-0023)</option>
+                <option value="6">Alice Martins (FJ26-0024)</option>
+              </select>
+            </div>
+            <div>
+              <label for="rMeio">Como a solicitação chegou</label>
+              <select id="rMeio">
+                <option>Presencial no portão</option>
+                <option>Telefone / WhatsApp</option>
+                <option>E-mail oficial</option>
+                <option>Bilhete na agenda</option>
+              </select>
+            </div>
+          </div>
+          <button class="acao" id="btRevogar" style="background-color: var(--danger);">🔔 Gravar Revogação no Supabase</button>
+          <div id="msgRevogar" class="msg-feedback"></div>
+        </div>
+      </section>
+
+      <!-- 5. PROJETOS E IMPRESSÃO (COM CRIAÇÃO DE NOVOS MODELOS) -->
+      <section id="projetos" hidden>
+        <div class="cartao">
+          <h3>🖨️ Geração e Impressão de Termos em Lote</h3>
+          <p style="font-size: 13px; color: #666; margin-top: 5px;">Selecione o evento para gerar os modelos de autorização impressos com código de rastreio.</p>
+          
+          <div class="campos" style="max-width: 600px;">
+            <div>
+              <label for="pProjeto">Projeto Acadêmico / Modelo</label>
+              <select id="pProjeto">
+                <option value="FJ26">Festa Junina 2026</option>
+                <option value="DP26">Dia dos Pais 2026</option>
+                <option value="BOS26">Passeio ao Bosque 2026</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="acao" id="btImprimir" onclick="imprimirTermos()" style="background-color: #27ae60;">🖨️ Gerar e Imprimir Termos (PDF / Impressora)</button>
+            <button class="acao-secundaria" onclick="toggleFormNovoModelo()">➕ Cadastrar Novo Modelo</button>
+          </div>
+        </div>
+
+        <!-- FORMULÁRIO DINÂMICO PARA CRIAR NOVO MODELO -->
+        <div class="cartao" id="cardNovoModelo" hidden style="border: 2px solid var(--primary); background: #f0f7ff;">
+          <h3 style="color: var(--primary);">✨ Cadastrar Novo Modelo / Projeto</h3>
+          <div class="campos">
+            <div>
+              <label for="novoNomeProjeto">Nome do Evento / Projeto</label>
+              <input type="text" id="novoNomeProjeto" placeholder="Ex.: Feira de Ciências 2026">
+            </div>
+            <div>
+              <label for="novoPrefixocodigo">Prefixo do Código (3 ou 4 letras)</label>
+              <input type="text" id="novoPrefixocodigo" placeholder="Ex.: FC26">
+            </div>
+          </div>
+          <div class="campos">
+            <div style="grid-column: 1 / -1;">
+              <label for="novoTextoTermo">Texto Específico da Autorização</label>
+              <textarea id="novoTextoTermo" rows="3" placeholder="Digite o texto legal específico para este modelo..."></textarea>
+            </div>
+          </div>
+          <button class="acao" onclick="salvarNovoModelo()">💾 Salvar e Usar Este Modelo</button>
+          <div id="msgNovoModelo" class="msg-feedback"></div>
+        </div>
+
+        <!-- PREVIEW DO MODELO SELECIONADO -->
+        <div class="cartao" id="termoParaImpressao">
+          <div style="border: 2px dashed #cbd5e1; padding: 25px; border-radius: 8px; background: #fff;">
+            <h2 style="text-align: center; color: var(--primary); margin-bottom: 5px;">CEMEI CACILDA</h2>
+            <p style="text-align: center; font-size: 12px; color: #666; margin-bottom: 20px;" id="previewTitulo">TERMO DE AUTORIZAÇÃO DE USO DE IMAGEM E VOZ - ANO 2026</p>
+            <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 13px; line-height: 1.6;" id="previewTexto">Eu, responsável legal pelo(a) aluno(a) cadastrado(a) sob este código, AUTORIZO a utilização de sua imagem para fins exclusivamente pedagógicos e de divulgação de atividades da unidade escolar CEMEI Cacilda.</p>
+            <br>
+            <p style="font-size: 12px;">Data: ____/____/2026 &nbsp;&nbsp;&nbsp;&nbsp; Assinatura do Responsável: ____________________________________</p>
+            <br>
+            <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 12px; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 4px;">
+              <span>Documento Oficial SEMEB nº 41/2026</span>
+              <span id="previewCodigo">Código Rastreio: FJ26-0005 a FJ26-0024</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <strong>Protótipo Acadêmico — Engenharia de Computação UNIVESP 2026</strong>
+    </footer>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://qedagvoobinkmczgmeli.supabase.co/rest/v1";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZGFndm9vYmlua21jemdtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTQyODAsImV4cCI6MjEwNTQ5MDI4MH0.yILHoh9pK55W2wUBPHaFpEyJtuBHAylBhfuTGqT5pLw";
+
+  // Banco local de modelos cadastrados
+  const modelosCadastrados = {
+    'FJ26': {
+      nome: 'Festa Junina 2026',
+      prefixo: 'FJ26',
+      texto: 'Eu, responsável legal pelo(a) aluno(a) cadastrado(a) sob este código, AUTORIZO a utilização de sua imagem para fins exclusivamente pedagógicos e de divulgação das atividades da Festa Junina 2026 da unidade escolar CEMEI Cacilda.'
+    },
+    'DP26': {
+      nome: 'Dia dos Pais 2026',
+      prefixo: 'DP26',
+      texto: 'Eu, responsável legal pelo(a) aluno(a) cadastrado(a) sob este código, AUTORIZO a utilização de sua imagem e vídeo nas apresentações comemorativas do Dia dos Pais 2026 do CEMEI Cacilda.'
+    },
+    'BOS26': {
+      nome: 'Passeio ao Bosque 2026',
+      prefixo: 'BOS26',
+      texto: 'Eu, responsável legal pelo(a) aluno(a) cadastrado(a) sob este código, AUTORIZO a participação e registo fotográfico do aluno durante a visita pedagógica ao Bosque Municipal 2026.'
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // A. Carregar Usuário do localStorage
+    const usuarioLogado = localStorage.getItem('usuarioLogado');
+    if (usuarioLogado) {
+      document.getElementById('userEmailDisplay').textContent = usuarioLogado;
+    }
+
+    // B. Alternância de Abas
+    const botoesMenu = document.querySelectorAll('.menu-item, [data-alvo]');
+    const secoes = document.querySelectorAll('main > section');
+
+    botoesMenu.forEach(botao => {
+      botao.addEventListener('click', () => {
+        const alvoId = botao.getAttribute('data-alvo');
+        if (!alvoId) return;
+
+        secoes.forEach(secao => {
+          if (secao.id === alvoId) {
+            secao.removeAttribute('hidden');
+          } else {
+            secao.setAttribute('hidden', '');
+          }
+        });
+
+        document.querySelectorAll('.menu-item').forEach(btn => {
+          if (btn.getAttribute('data-alvo') === alvoId) {
+            btn.classList.add('ativo');
+          } else {
+            btn.classList.remove('ativo');
+          }
+        });
+      });
+    });
+
+    // C. Carregar Indicadores em Tempo Real do Supabase
+    atualizarIndicadores();
+
+    // D. Eventos dos Filtros e Modelos
+    document.getElementById('fTurma').addEventListener('change', filtrarPorTurma);
+    document.getElementById('pProjeto').addEventListener('change', atualizarPreviewModelo);
+
+    // E. Eventos dos Botões
+    document.getElementById('btVerificar').addEventListener('click', verificarAutorizacoes);
+    document.getElementById('btCodigo').addEventListener('click', darBaixaPorCodigo);
+    document.getElementById('btRevogar').addEventListener('click', registrarRevogacao);
+
+    // Inicializa a pré-visualização do modelo
+    atualizarPreviewModelo();
+  });
+
+  // 🚪 Logout
+  function fazerLogout() {
+    localStorage.removeItem('usuarioLogado');
+    window.location.href = 'login.html';
+  }
+
+  // 🖨️ Alternar Formulário de Criar Modelo
+  function toggleFormNovoModelo() {
+    const card = document.getElementById('cardNovoModelo');
+    card.hidden = !card.hidden;
+  }
+
+  // 💾 Salvar Novo Modelo de Impressão Dinamicamente
+  function salvarNovoModelo() {
+    const nome = document.getElementById('novoNomeProjeto').value.trim();
+    const prefixo = document.getElementById('novoPrefixocodigo').value.trim().toUpperCase();
+    const texto = document.getElementById('novoTextoTermo').value.trim();
+    const msg = document.getElementById('msgNovoModelo');
+
+    if (!nome || !prefixo || !texto) {
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Por favor, preencha todos os campos do novo modelo.';
+      return;
+    }
+
+    // Salvar no dicionário de modelos
+    modelosCadastrados[prefixo] = { nome, prefixo, texto };
+
+    // Adicionar a opção ao select
+    const select = document.getElementById('pProjeto');
+    const novaOpcao = document.createElement('option');
+    novaOpcao.value = prefixo;
+    novaOpcao.textContent = nome;
+    select.appendChild(novaOpcao);
+
+    // Selecionar o modelo recém-criado
+    select.value = prefixo;
+    atualizarPreviewModelo();
+
+    msg.style.color = 'var(--ok)';
+    msg.textContent = `✅ Modelo '${nome}' cadastrado com sucesso!`;
+
+    // Limpar formulário e fechar após 1.5s
+    setTimeout(() => {
+      document.getElementById('novoNomeProjeto').value = '';
+      document.getElementById('novoPrefixocodigo').value = '';
+      document.getElementById('novoTextoTermo').value = '';
+      msg.textContent = '';
+      document.getElementById('cardNovoModelo').hidden = true;
+    }, 1500);
+  }
+
+  // 👁️ Atualizar Pré-visualização do Modelo Selecionado
+  function atualizarPreviewModelo() {
+    const prefixoSel = document.getElementById('pProjeto').value;
+    const modelo = modelosCadastrados[prefixoSel];
+
+    if (modelo) {
+      document.getElementById('previewTitulo').textContent = `TERMO DE AUTORIZAÇÃO - ${modelo.nome.toUpperCase()}`;
+      document.getElementById('previewTexto').textContent = modelo.texto;
+      document.getElementById('previewCodigo').textContent = `Código Rastreio: ${modelo.prefixo}-0001 a ${modelo.prefixo}-0030`;
+    }
+  }
+
+  // 📊 1. Indicadores Dinâmicos via Supabase
+  function atualizarIndicadores() {
+    fetch(`${SUPABASE_URL}/criancas?select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        const validos = data.filter(c => c.autorizado === true).length;
+        const revogados = data.filter(c => c.autorizado === false).length;
+
+        document.getElementById('numValidos').textContent = validos;
+        document.getElementById('numVencidas').textContent = revogados;
+        document.getElementById('numRevogados').textContent = revogados;
+      }
+    })
+    .catch(err => console.error('Erro nos indicadores:', err));
+  }
+
+  // 🔍 2. Filtro de Crianças por Turma
+  function filtrarPorTurma() {
+    const turmaSelecionada = document.getElementById('fTurma').value;
+    const labels = document.querySelectorAll('#grade label');
+
+    labels.forEach(label => {
+      const turmaLabel = label.getAttribute('data-turma');
+      if (turmaSelecionada === 'TODAS' || turmaLabel === turmaSelecionada) {
+        label.style.display = 'flex';
+      } else {
+        label.style.display = 'none';
+      }
+    });
+  }
+
+  // 🖨️ 3. Simulação de Impressão
+  function imprimirTermos() {
+    window.print();
+  }
+
+  // 🔎 4. Verificar Autorizações
+  function verificarAutorizacoes() {
+    const checkboxes = document.querySelectorAll('#grade input[type="checkbox"]:checked');
+    const areaResultado = document.getElementById('areaResultado');
+
+    if (checkboxes.length === 0) {
+      areaResultado.innerHTML = `<div class="resultado"><div class="lista bloqueado"><div class="cab">⚠️ Selecione pelo menos uma criança para verificar.</div></div></div>`;
+      return;
+    }
+
+    areaResultado.innerHTML = '<p style="padding: 15px; color: #666;">Consultando Supabase...</p>';
+
+    fetch(`${SUPABASE_URL}/criancas?select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    })
+    .then(res => res.json())
+    .then(criancas => {
+      let liberados = [];
+      let bloqueados = [];
+
+      checkboxes.forEach(cb => {
+        const criancaId = cb.value;
+        const criancaEncontrada = Array.isArray(criancas) ? criancas.find(c => String(c.id) === String(criancaId)) : null;
+        const nomeLabel = cb.parentNode.querySelector('span').childNodes[0].textContent.trim();
+
+        if (criancaEncontrada && criancaEncontrada.autorizado) {
+          liberados.push({ nome: criancaEncontrada.nome, motivo: 'Autorização válida no Supabase.' });
+        } else {
+          bloqueados.push({ nome: criancaEncontrada ? criancaEncontrada.nome : nomeLabel, motivo: 'Termo pendente, vencido ou revogado.' });
+        }
+      });
+
+      let html = '<div class="resultado">';
+      if (liberados.length > 0) {
+        html += `<div class="lista liberado"><div class="cab">✅ Publicação liberada (${liberados.length})</div><ul>`;
+        liberados.forEach(item => { html += `<li><strong>${item.nome}</strong><span class="motivo">${item.motivo}</span></li>`; });
+        html += `</ul></div>`;
+      }
+
+      if (bloqueados.length > 0) {
+        html += `<div class="lista bloqueado"><div class="cab">⚠️ Conferir antes de publicar (${bloqueados.length})</div><ul>`;
+        bloqueados.forEach(item => { html += `<li><strong>${item.nome}</strong><span class="motivo">${item.motivo}</span></li>`; });
+        html += `</ul></div>`;
+      }
+      html += '</div>';
+      areaResultado.innerHTML = html;
+    })
+    .catch(err => {
+      console.error(err);
+      areaResultado.innerHTML = '<div class="resultado"><div class="lista bloqueado"><div class="cab">❌ Erro ao consultar o banco de dados.</div></div></div>';
+    });
+  }
+
+  // 📋 5. Dar Baixa por Código
+  function darBaixaPorCodigo() {
+    const codigoInput = document.getElementById('dCodigo').value.trim();
+    const msg = document.getElementById('msgDevolucao');
+
+    if (!codigoInput) {
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Por favor, informe o código do termo (Ex: DP26-0012).';
+      return;
+    }
+
+    msg.style.color = '#666';
+    msg.textContent = 'Enviando atualização para o Supabase...';
+
+    fetch(`${SUPABASE_URL}/criancas?codigo_termo=eq.${encodeURIComponent(codigoInput)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ autorizado: true })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        msg.style.color = 'var(--ok)';
+        msg.textContent = `✅ Baixa concluída! O termo ${codigoInput} (${data[0].nome}) agora está VÁLIDO no Supabase.`;
+        document.getElementById('dCodigo').value = '';
+        atualizarIndicadores();
+      } else {
+        msg.style.color = 'var(--danger)';
+        msg.textContent = `❌ Código '${codigoInput}' não foi encontrado no banco de dados.`;
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Erro ao conectar ao Supabase.';
+    });
+  }
+
+  // 🔔 6. Registrar Revogação
+  function registrarRevogacao() {
+    const criancaId = document.getElementById('rCrianca').value;
+    const msg = document.getElementById('msgRevogar');
+
+    msg.style.color = '#666';
+    msg.textContent = 'Gravando revogação no Supabase...';
+
+    fetch(`${SUPABASE_URL}/criancas?id=eq.${criancaId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ autorizado: false })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        msg.style.color = 'var(--warn)';
+        msg.textContent = `🔔 Revogação registrada! A autorização de ${data[0].nome} foi CANCELADA no Supabase.`;
+        atualizarIndicadores();
+      } else {
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'Não foi possível registrar a revogação.';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Erro ao conectar ao Supabase.';
+    });
+  }
+</script>
+</body>
+</html>

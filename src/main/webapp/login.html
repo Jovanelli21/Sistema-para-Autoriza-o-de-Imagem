@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - CEMEI Cacilda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
+        .card-acesso { background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); width: 100%; max-width: 400px; text-align: center; }
+        .logo-casa { font-size: 40px; margin-bottom: 10px; }
+        .card-acesso h2 { margin-bottom: 8px; color: #333; }
+        .card-acesso p { font-size: 14px; color: #666; margin-bottom: 24px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; color: #666; font-size: 14px; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; transition: border-color 0.3s; }
+        .input-group input:focus { border-color: #4a90e2; }
+        .button-group { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        .btn-cadastrar { background-color: #2ecc71; color: white; }
+        .btn-cadastrar:hover { background-color: #27ae60; }
+        .btn-entrar { background-color: #3498db; color: white; }
+        .btn-entrar:hover { background-color: #2980b9; }
+        #mensagemFeedback { margin-top: 15px; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="card-acesso">
+        <div class="logo-casa">🏠</div>
+        <h2>CEMEI Cacilda</h2>
+        <p>Controle de Autorização de Uso de Imagem</p>
+
+        <form id="formCadastro">
+            <div class="input-group">
+                <label for="login">E-mail / Utilizador</label>
+                <input type="text" id="login" name="login" placeholder="Ex: cemeicacilda@semeb.sp.gov.br" required>
+            </div>
+
+            <div class="input-group">
+                <label for="senha">Palavra-passe</label>
+                <input type="password" id="senha" name="senha" placeholder="Digite a sua palavra-passe" required>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-cadastrar">Cadastrar Gestor</button>
+                <button type="button" class="btn btn-entrar" onclick="acessarPainel()">Entrar no Painel</button>
+            </div>
+        </form>
+        
+        <div id="mensagemFeedback"></div>
+    </div>
+
+    <script>
+  document.getElementById('formCadastro').addEventListener('submit', function(e) {
+      e.preventDefault(); 
+
+      const loginInput = document.getElementById('login').value;
+      const feedbackDiv = document.getElementById('mensagemFeedback');
+      feedbackDiv.style.color = '#666';
+      feedbackDiv.textContent = 'A processar cadastro no Supabase...';
+
+      const params = new URLSearchParams(new FormData(this));
+
+      fetch('cadastrar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+          body: params
+      })
+      .then(response => response.text())
+      .then(data => {
+          const respostaTrim = data.trim();
+          if (respostaTrim === "Sucesso" || respostaTrim.includes("Sucesso")) {
+              // Guarda o e-mail do gestor logado no localStorage
+              localStorage.setItem('usuarioLogado', loginInput);
+
+              feedbackDiv.style.color = '#27ae60';
+              feedbackDiv.textContent = 'Gestor registrado com sucesso! Entrando...';
+              setTimeout(() => {
+                  window.location.href = 'index.html';
+              }, 1000);
+          } else {
+              feedbackDiv.style.color = '#e74c3c';
+              feedbackDiv.textContent = respostaTrim;
+          }
+      })
+      .catch(error => {
+          console.error('Erro:', error);
+          feedbackDiv.style.color = '#e74c3c';
+          feedbackDiv.textContent = 'Erro de ligação com o servidor.';
+      });
+  });
+
+  function acessarPainel() {
+      const loginInput = document.getElementById('login').value;
+      if (loginInput) {
+          localStorage.setItem('usuarioLogado', loginInput);
+      }
+      window.location.href = 'index.html';
+  }
+</script>
+
+</body>
+</html>
